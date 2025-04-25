@@ -1,12 +1,7 @@
 *** Settings ***
-Library           ../keywords/masking_keywords.py
-Test Setup        Setup Test
-Test Teardown     Teardown Test
-
-*** Variables ***
-${CONFIG_FILE}    ../config/field_masking_rules.xlsx
-${DATA_FOLDER}    ../data
-${RESULT_FILE}    ../results/masking_failures.csv
+Resource    ../resources/masking_resource.robot
+Test Setup  Setup Test
+Test Teardown  Teardown Test
 
 *** Test Cases ***
 Validate All Files Are Masked

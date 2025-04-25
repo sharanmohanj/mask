@@ -1,0 +1,19 @@
+*** Settings ***
+Library    ../keywords/masking_keywords.py
+
+*** Variables ***
+${CONFIG_FILE}    ../config/field_masking_rules.xlsx
+${DATA_FOLDER}    ../data
+${RESULT_FILE}    ../results/masking_failures.csv
+
+*** Keywords ***
+Setup Test
+    Log    Setting up the masking validation test
+
+Teardown Test
+    Log    Tearing down the masking validation test
+
+Check All Files
+    [Arguments]    ${data_folder}    ${config_file}    ${result_file}
+    ${result}=    Check All Files    ${data_folder}    ${config_file}    ${result_file}
+    [Return]    ${result}
