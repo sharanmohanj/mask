@@ -1,0 +1,43 @@
+import os
+import pandas as pd
+
+def read_config(file_path):
+    config = pd.read_excel(file_path, dtype=str)
+    config['FieldsToMask'] = config['FieldsToMask'].apply(lambda x: [f.strip() for f in x.split(',')])
+    return config.set_index('Code').to_dict()['FieldsToMask']
+
+def extract_code(file_name):
+    return file_name[18:22]  # Based on RBCD2023092112000001002310626.txt
+
+def validate_masking(file_path, fields_to_mask):
+    with open(file_path, 'r') as f:
+        headers = f.readline().strip().split('|')
+        data = f.readline().strip().split('|')
+        record = dict(zip(headers, data))
+
+    failures = {}
+    for field in fields_to_mask:
+        if field in record:
+            value = record[field]
+            if not value or not all(c == 'X' for c in value):
+                failures[field] = value
+    return failures
+
+def check_all_files(data_folder, config_path, result_path=None):
+    config = read_config(config_path)
+    results = []
+
+    for filename in os.listdir(data_folder):
+        if filename.endswith(".txt"):
+            code = extract_code(filename)
+            if code in config:
+                fields_to_mask = config[code]
+                file_path = os.path.join(data_folder, filename)
+                failures = validate_masking(file_path, fields_to_mask)
+                if failures:
+                    results.append({'File': filename, 'Failures': str(failures)})
+
+    if result_path:
+        pd.DataFrame(results).to_csv(result_path, index=False)
+
+    return len(results) == 0  # True if all passed

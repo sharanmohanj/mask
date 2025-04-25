@@ -1,0 +1,14 @@
+*** Settings ***
+Library           ../keywords/masking_keywords.py
+Test Setup        Setup Test
+Test Teardown     Teardown Test
+
+*** Variables ***
+${CONFIG_FILE}    ../config/field_masking_rules.xlsx
+${DATA_FOLDER}    ../data
+${RESULT_FILE}    ../results/masking_failures.csv
+
+*** Test Cases ***
+Validate All Files Are Masked
+    ${result}=    Check All Files    ${DATA_FOLDER}    ${CONFIG_FILE}    ${RESULT_FILE}
+    Should Be True    ${result}    Masking check failed. See ${RESULT_FILE}
