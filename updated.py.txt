@@ -1,0 +1,54 @@
+import os
+import pandas as pd
+
+def read_config(file_path):
+    config = pd.read_excel(file_path, dtype=str)
+    config['FieldsToMask'] = config['FieldsToMask'].apply(lambda x: [f.strip() for f in x.split(',')])
+    return config.set_index('Code').to_dict()['FieldsToMask']
+
+def extract_code(file_name):
+    return file_name[18:22]
+
+def validate_masking(file_path, fields_to_mask):
+    failures = []
+
+    with open(file_path, 'r') as f:
+        headers = f.readline().strip().split('|')  # Read header first
+
+        for line_num, line in enumerate(f, start=2):  # Start from line 2 (since line 1 is header)
+            line = line.strip()
+            if not line:
+                continue  # Skip empty lines
+            data = line.split('|')
+            record = dict(zip(headers, data))
+
+            for field in fields_to_mask:
+                if field in record:
+                    value = record[field]
+                    if not value or not all(c == 'X' for c in value):
+                        failures.append({
+                            'File': os.path.basename(file_path),
+                            'LineNumber': line_num,
+                            'Field': field,
+                            'InvalidValue': value
+                        })
+
+    return failures
+
+def check_all_files(data_folder, config_path, result_path=None):
+    config = read_config(config_path)
+    all_failures = []
+
+    for filename in os.listdir(data_folder):
+        if filename.endswith(".txt"):
+            code = extract_code(filename)
+            if code in config:
+                fields_to_mask = config[code]
+                file_path = os.path.join(data_folder, filename)
+                failures = validate_masking(file_path, fields_to_mask)
+                all_failures.extend(failures)
+
+    if result_path and all_failures:
+        pd.DataFrame(all_failures).to_csv(result_path, index=False)
+
+    return len(all_failures) == 0  # True if no failures
